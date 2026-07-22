@@ -10,6 +10,11 @@ on:
         required: false
         type: string
         default: 'tqp-v0.3.0'
+      cuda_arch:
+        description: 'CUDA architecture (70=V100, 120=Blackwell)'
+        required: false
+        type: string
+        default: '70'
 permissions:
   packages: write
   contents: read
@@ -37,9 +42,10 @@ jobs:
         id: meta
         run: |
           REF="${{ inputs.turboquant_ref || 'tqp-v0.3.0' }}"
+          ARCH="${{ inputs.cuda_arch || '70' }}"
           IMAGE_LOWER=$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
           echo "image=${{ env.REGISTRY }}/${IMAGE_LOWER}" >> $GITHUB_OUTPUT
-          echo "tag=${REF}-sm70" >> $GITHUB_OUTPUT
+          echo "tag=${REF}-sm${ARCH}" >> $GITHUB_OUTPUT
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -49,20 +55,20 @@ jobs:
           push: true
           tags: |
             ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}
-            ${{ steps.meta.outputs.image }}:latest
           build-args: |
             TURBOQUANT_REF=${{ inputs.turboquant_ref || 'tqp-v0.3.0' }}
+            CUDA_ARCH=${{ inputs.cuda_arch || '70' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Summary
         run: |
+          ARCH="${{ inputs.cuda_arch || '70' }}"
           echo "### Docker Image Built" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Image: \`${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "Also tagged: \`${{ steps.meta.outputs.image }}:latest\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "TurboQuant ref: ${{ inputs.turboquant_ref || 'tqp-v0.3.0' }}" >> $GITHUB_STEP_SUMMARY
-          echo "Target: sm_70 (V100/Volta)" >> $GITHUB_STEP_SUMMARY
+          echo "Target: sm_${ARCH}" >> $GITHUB_STEP_SUMMARY
           echo "CUDA: 12.8.1" >> $GITHUB_STEP_SUMMARY
           echo "GGML_CUDA_FA_ALL_QUANTS=ON" >> $GITHUB_STEP_SUMMARY

@@ -1,12 +1,14 @@
 ARG CUDA_VERSION=12.8.1
 ARG GCC_VERSION=14
 ARG TURBOQUANT_REF=tqp-v0.3.0
+ARG CUDA_ARCH=70
 
 # ─── Build stage ───────────────────────────────────────────────
 FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu24.04 AS build
 
 ARG GCC_VERSION
 ARG TURBOQUANT_REF
+ARG CUDA_ARCH
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -36,7 +38,7 @@ RUN git clone --depth 1 --branch ${TURBOQUANT_REF} \
 # Without it, turbo KV works but NOT with FA VEC kernels.
 RUN cmake -B build \
         -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_CUDA_ARCHITECTURES=70 \
+        -DCMAKE_CUDA_ARCHITECTURES=${CUDA_ARCH} \
         -DCMAKE_INSTALL_RPATH='$ORIGIN' \
         -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
         -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
@@ -70,7 +72,7 @@ ARG TURBOQUANT_REF
 LABEL maintainer="renne"
 LABEL description="TheTom/llama-cpp-turboquant V100/SM70 with all FA quant instances"
 LABEL turboquant.ref="${TURBOQUANT_REF}"
-LABEL target.arch="sm_70"
+LABEL target.arch="sm_${CUDA_ARCH}"
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
