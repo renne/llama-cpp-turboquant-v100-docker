@@ -48,6 +48,7 @@ RUN cmake -B build \
         -DLLAMA_BUILD_TESTS=OFF \
         -DLLAMA_BUILD_EXAMPLES=OFF \
         -DLLAMA_BUILD_UI=OFF \
+        -DLLAMA_USE_PREBUILT_UI=OFF \
         . && \
     cmake --build build --config Release -j$(nproc)
 
